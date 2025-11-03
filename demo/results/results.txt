@@ -1,0 +1,53 @@
+
+============================================================
+INCREMENTAL ADVERTISING DEMO
+============================================================
+Loaded environment variables from .env file
+Loaded environment variables from .env file
+Loaded Real-time Auction: 10000 rows
+Loaded Video Ads: 10000 rows
+
+Preparing data...
+Using Real-time Auction dataset (Dataset.csv) - has revenue data
+
+============================================================
+DEMO 1: A/B Test with CUPED
+============================================================
+Test: 0.4492, Control: 0.4504
+Lift: -0.25%, P-value: 0.9099
+
+============================================================
+DEMO 2: Tree-based Causal Inference
+============================================================
+Average Treatment Effect: -0.0018
+Effect Variance: 0.0005
+Heterogeneity: 24 segments identified
+
+============================================================
+DEMO 3: Uplift Modeling
+============================================================
+
+Model Performance:
+  T-Learner: Avg Uplift = 0.0050, MSE = 0.0031
+  S-Learner: Avg Uplift = 0.0003, MSE = 0.0000
+  X-Learner: Avg Uplift = 0.0055, MSE = 0.0018
+  DR-Learner: Avg Uplift = 0.0050, MSE = 0.0026
+
+============================================================
+DEMO 5: iROAS vs ROAS Comparison
+============================================================
+Test Revenue: $400.17, Control: $348.00
+Incremental Revenue: $52.18
+iROAS: 13.24%, ROAS: 101.55%
+Gap: 88.31 percentage points
+
+============================================================
+DEMO 6: Complete Experiment Workflow
+============================================================
+Test: 4924 samples, mean = 0.4492
+Control: 5076 samples, mean = 0.4504
+Lift: -0.25%, P-value: 0.9099, Significant: False
+
+============================================================
+COMPLETE - Results saved to: demo/results/results.txt
+============================================================

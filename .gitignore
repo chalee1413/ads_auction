@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Environment Variables & Credentials
+.env
+.env.local
+.env.*.local
+kaggle.json
+*.key
+*.pem
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# Data files (do not commit data files)
+data/
+*.csv
+*.parquet
+*.json
+
+# Results and logs
+*.log
+logs/
+results/temp/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Kaggle
+.kaggle/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Rules and project standards (internal use only)
+rules/
+
+# Personal work plans (internal use only)
+30_60_90_plan.md
+
