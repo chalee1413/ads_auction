@@ -57,8 +57,8 @@ def calculate_iroas(
     DECISION RATIONALE:
     Why iROAS instead of ROAS?
     1. Attribution Bias: ROAS attributes all conversions to ads, ignoring that many
-       users would convert anyway (brand loyalists, organic searchers). Our analysis
-       shows a 1,615 percentage point gap - ROAS massively overstates effectiveness.
+       users would convert anyway (brand loyalists, organic searchers). Analysis
+       shows a 1,615 percentage point gap - ROAS overstates effectiveness by a large margin.
     2. Causal Validity: iROAS measures true causal effect by comparing test vs control,
        isolating incremental revenue that wouldn't exist without advertising.
     3. Budget Optimization: Optimizing on ROAS wastes 80-90% of budget on non-incremental
@@ -140,8 +140,8 @@ def test_significance(
     """
     Perform statistical significance test for lift.
     
-    Uses two-sample t-test to test if test group significantly
-    differs from control group.
+    Uses two-sample t-test to test if test group differs
+    from control group in a statistically meaningful way.
     
     Args:
         test_values: Array of metric values from test group

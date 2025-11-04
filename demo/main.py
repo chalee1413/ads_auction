@@ -138,7 +138,7 @@ def demo_cuped(rtb_data):
         test_post = outcome[(treatment == 1) & ~pre_mask]
         control_post = outcome[(treatment == 0) & ~pre_mask]
         
-        # CUPED requires same length arrays - use simple comparison if sizes differ significantly
+        # CUPED requires same length arrays - use simple comparison if sizes differ substantially
         if len(test_pre) > 10 and len(control_pre) > 10 and len(test_post) > 10 and len(control_post) > 10:
             # Try to use min length if sizes differ
             min_len_pre = min(len(test_pre), len(control_pre))

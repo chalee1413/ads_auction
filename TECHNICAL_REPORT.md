@@ -256,7 +256,7 @@ All demos now include assumption checks that validate data requirements and stat
 
 ## 5. Scaling to Production: Architecture and Plan
 
-To deploy these methodologies at scale (billions of impressions, sub-100ms latency), I recommend the following architecture and implementation plan.
+To deploy these methodologies at scale (billions of impressions, sub-100ms latency), the following architecture and implementation plan is recommended.
 
 ### 5.1 Data Infrastructure
 
@@ -265,39 +265,41 @@ To deploy these methodologies at scale (billions of impressions, sub-100ms laten
 **Production Architecture**:
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Data Ingestion Layer                     │
-│  Kafka/Kinesis Streams (real-time bid/impression logs)      │
-│  Batch pipelines (Spark/Beam) for historical data           │
-└─────────────────────────────────────────────────────────────┘
+==================================================================
+                    Data Ingestion Layer
+==================================================================
+  Kafka/Kinesis Streams (real-time bid/impression logs)
+  Batch pipelines (Spark/Beam) for historical data
+==================================================================
                           ->
-┌─────────────────────────────────────────────────────────────┐
-│                  Feature Store (Feast/Tecton)               │
-│  - Real-time features (user history, campaign features)     │
-│  - Offline features (pre-period metrics, propensity scores)│
-│  - Feature versioning and consistency guarantees             │
-└─────────────────────────────────────────────────────────────┘
+==================================================================
+                  Feature Store (Feast/Tecton)
+==================================================================
+  - Real-time features (user history, campaign features)
+  - Offline features (pre-period metrics, propensity scores)
+  - Feature versioning and consistency guarantees
+==================================================================
                           ->
-┌─────────────────────────────────────────────────────────────┐
-│              Incrementality Measurement Service             │
-│  ┌──────────────────┐  ┌──────────────────┐                │
-│  │  Uplift Models   │  │  Causal Inference│                │
-│  │  (T/X/DR)        │  │  (Trees, PSM)    │                │
-│  └──────────────────┘  └──────────────────┘                │
-│  ┌──────────────────┐  ┌──────────────────┐                │
-│  │  iROAS Calc      │  │  Experimentation │                │
-│  │  Engine          │  │  Framework       │                │
-│  └──────────────────┘  └──────────────────┘                │
-│  Latency: <100ms per prediction                             │
-│  Throughput: 10K+ QPS                                       │
-└─────────────────────────────────────────────────────────────┘
+==================================================================
+              Incrementality Measurement Service
+==================================================================
+  [Uplift Models]      [Causal Inference]
+  (T/X/DR)             (Trees, PSM)
+  
+  [iROAS Calc]         [Experimentation]
+  Engine               Framework
+  
+  Latency: <100ms per prediction
+  Throughput: 10K+ QPS
+==================================================================
                           ->
-┌─────────────────────────────────────────────────────────────┐
-│               Bidding Service (iROAS-aware)                 │
-│  - Incremental value prediction per impression              │
-│  - Budget pacing and constraint optimization                │
-│  - Real-time auction participation                          │
-└─────────────────────────────────────────────────────────────┘
+==================================================================
+               Bidding Service (iROAS-aware)
+==================================================================
+  - Incremental value prediction per impression
+  - Budget pacing and constraint optimization
+  - Real-time auction participation
+==================================================================
 ```
 
 ### 5.2 Technology Stack
@@ -435,7 +437,7 @@ All algorithm citations and references are available in "demo/CITATIONS.md". Thi
 - Incrementality Measurement Guide (IMM) for iROAS bidding
 
 **Datasets**:
-- RTB Dataset: https://www.kaggle.com/datasets/zurfer/rtb
+- Real-time Advertisers Auction: https://www.kaggle.com/datasets/saurav9786/real-time-advertisers-auction
 - Video Ads Engagement: https://www.kaggle.com/datasets/karnikakapoor/video-ads-engagement-dataset
 
 ---

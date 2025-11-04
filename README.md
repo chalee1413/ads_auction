@@ -45,12 +45,12 @@ Results saved to "demo/results/results.txt".
 ## Project Structure
 
 ```
-├── demo/                    # Algorithm implementations
-│   ├── main.py             # Run all demos
-│   ├── results/            # Output files
-│   └── *.py                # Algorithm modules
-├── data/kaggle/            # Dataset storage
-└── *.md                    # Documentation
+demo/                    # Algorithm implementations
+  main.py                # Run all demos
+  results/               # Output files
+  *.py                   # Algorithm modules
+data/kaggle/             # Dataset storage
+*.md                     # Documentation
 ```
 
 ## Research Foundation
