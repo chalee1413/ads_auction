@@ -568,7 +568,29 @@ def calculate_iroas(
 
 ## 7. Production Readiness Choices
 
-### 7.1 Why Error Handling?
+### 7.1 Why Assumption Validation?
+
+**Decision**: All demos include assumption checks that validate data requirements and statistical assumptions before computing results.
+
+**Reasoning**:
+1. **Transparency**: Assumption checks provide clear PASS/FAIL status for each assumption
+2. **Result Validity**: Warnings displayed when assumptions fail indicate results may be invalid
+3. **Data Quality**: Checks help identify data quality issues early
+4. **Best Practice**: Validating assumptions before computing results is standard practice in causal inference
+
+**Implementation**: Each demo function includes assumption validation checks:
+- CUPED: Sample size, pre-post correlation, balanced groups
+- Tree-based Causal: Sample size, RCT balance, positivity
+- Uplift Models: Sample size, RCT balance, sufficient per group
+- Ghost Bidding: Bid data availability, sample size, valid bids
+- iROAS: RCT balance, sample size, valid spend/revenue
+
+**Alternatives Considered**:
+- **No validation**: Rejected - invalid results can occur when assumptions are violated
+- **Post-hoc validation**: Rejected - better to check before computing
+- **Current approach**: Selected - transparent, comprehensive, user-friendly
+
+### 7.2 Why Error Handling?
 
 **Decision**: Include error handling for edge cases (division by zero, empty arrays, etc.).
 
