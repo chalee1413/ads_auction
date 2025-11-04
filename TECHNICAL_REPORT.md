@@ -83,6 +83,9 @@ These challenges mirror production environments where data quality varies and ro
 
 Six demonstrations were implemented, each covering distinct methodologies for incrementality measurement. All implementations use real algorithms from peer-reviewed research papers with proper citations (see "demo/CITATIONS.md").
 
+**Assumption Validation:**
+All demos now include assumption checks that validate data requirements and statistical assumptions before computing results. Each demo displays PASS/FAIL status for assumptions, specific errors if assumptions fail, and WARNING messages when results may be invalid. This ensures transparent reporting of result validity and helps identify data quality issues early.
+
 ### Demo 1: A/B Test with CUPED Adjustment
 
 **Objective**: Demonstrate variance reduction using Controlled-experiment Using Pre-period Data (CUPED).

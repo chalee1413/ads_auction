@@ -151,8 +151,23 @@ def demo_cuped(rtb_data):
                 control_post = control_post[:min_len_post]
                 
                 results = cuped_adjustment(test_pre, test_post, control_pre, control_post)
+                checks = results['assumption_checks']
+                
+                # Display assumption checks
+                print("\nAssumption Checks:")
+                print(f"  Sample Size: {'PASS' if checks['sample_size_passed'] else 'FAIL'}")
+                if not checks['sample_size_passed']:
+                    for err in checks['sample_size_errors']:
+                        print(f"    - {err}")
+                print(f"  Pre-Post Correlation: {'PASS' if checks['pre_post_correlation_passed'] else 'FAIL'} (r={checks['pre_post_correlation']:.3f})")
+                print(f"  Balanced Groups: {'PASS' if checks['balanced_groups_passed'] else 'FAIL'}")
+                print(f"  All Assumptions: {'PASS' if results['assumptions_passed'] else 'FAIL'}")
+                
+                if not results['assumptions_passed']:
+                    print("\nWARNING: Some assumptions failed. Results may be invalid.")
+                
                 sig = statistical_significance(test_pre, test_post, control_pre, control_post)
-                print(f"Unadjusted Effect: {results['unadjusted_effect']:.4f}")
+                print(f"\nUnadjusted Effect: {results['unadjusted_effect']:.4f}")
                 print(f"CUPED Effect: {results['adjusted_effect']:.4f}")
                 print(f"Variance Reduction: {results['variance_reduction']*100:.1f}%")
                 print(f"P-value: {sig['p_value']:.4f}, Significant: {sig['is_significant']}")
@@ -187,7 +202,22 @@ def demo_tree_causal(rtb_data):
         return
     
     results = robust_causal_inference(X, treatment, outcome)
-    print(f"Average Treatment Effect: {results['average_treatment_effect']:.4f}")
+    checks = results['assumption_checks']
+    
+    # Display assumption checks
+    print("\nAssumption Checks:")
+    print(f"  Sample Size: {'PASS' if checks['sample_size_passed'] else 'FAIL'}")
+    print(f"  RCT Balance: {'PASS' if checks['balanced_treatment_passed'] else 'FAIL'}")
+    print(f"  Positivity: {'PASS' if checks['positivity_passed'] else 'FAIL'}")
+    if checks['errors']:
+        for err in checks['errors']:
+            print(f"    - {err}")
+    print(f"  All Assumptions: {'PASS' if results['assumptions_passed'] else 'FAIL'}")
+    
+    if not results['assumptions_passed']:
+        print("\nWARNING: Some assumptions failed. Results may be invalid.")
+    
+    print(f"\nAverage Treatment Effect: {results['average_treatment_effect']:.4f}")
     print(f"Effect Variance: {results['effect_variance']:.4f}")
     print(f"Heterogeneity: {len(results['segment_stats'])} segments identified")
 
@@ -208,6 +238,23 @@ def demo_uplift(rtb_data):
     if len(X) < 100:
         print("Insufficient data (need >= 100 samples)")
         return
+    
+    # Check assumptions
+    from demo.uplift_models import check_uplift_assumptions
+    assumption_checks = check_uplift_assumptions(X, treatment, outcome)
+    
+    print("\nAssumption Checks:")
+    print(f"  Sample Size: {'PASS' if assumption_checks['sample_size_passed'] else 'FAIL'}")
+    print(f"  RCT Balance: {'PASS' if assumption_checks['rct_balance_passed'] else 'FAIL'}")
+    print(f"  Positivity: {'PASS' if assumption_checks['positivity_passed'] else 'FAIL'}")
+    print(f"  Sufficient Per Group: {'PASS' if assumption_checks['sufficient_per_group_passed'] else 'FAIL'}")
+    if assumption_checks['errors']:
+        for err in assumption_checks['errors']:
+            print(f"    - {err}")
+    print(f"  All Assumptions: {'PASS' if assumption_checks['all_assumptions_passed'] else 'FAIL'}")
+    
+    if not assumption_checks['all_assumptions_passed']:
+        print("\nWARNING: Some assumptions failed. Results may be invalid.")
     
     # Simple uplift model comparison
     models = ['T-Learner', 'S-Learner', 'X-Learner', 'DR-Learner']
@@ -279,9 +326,47 @@ def demo_ghost_bidding(rtb_data):
     if our_bids.sum() == 0:
         return
     
+    # Check assumptions
+    checks = {
+        'bid_data_passed': True,
+        'sample_size_passed': True,
+        'valid_bids_passed': True,
+        'all_assumptions_passed': True,
+        'errors': []
+    }
+    
+    if len(our_bids) < 100:
+        checks['sample_size_passed'] = False
+        checks['errors'].append(f"Sample size {len(our_bids)} < 100")
+    
+    if our_bids.sum() == 0:
+        checks['valid_bids_passed'] = False
+        checks['errors'].append("All bid values are zero")
+    
+    if competition_bids.sum() == 0:
+        checks['errors'].append("All competition bid values are zero")
+    
+    checks['all_assumptions_passed'] = (
+        checks['bid_data_passed'] and
+        checks['sample_size_passed'] and
+        checks['valid_bids_passed']
+    )
+    
     print("\n" + "=" * 60)
     print("DEMO 4: Ghost Bidding Simulation")
     print("=" * 60)
+    
+    print("\nAssumption Checks:")
+    print(f"  Bid Data Available: {'PASS' if checks['bid_data_passed'] else 'FAIL'}")
+    print(f"  Sample Size: {'PASS' if checks['sample_size_passed'] else 'FAIL'}")
+    print(f"  Valid Bids: {'PASS' if checks['valid_bids_passed'] else 'FAIL'}")
+    if checks['errors']:
+        for err in checks['errors']:
+            print(f"    - {err}")
+    print(f"  All Assumptions: {'PASS' if checks['all_assumptions_passed'] else 'FAIL'}")
+    
+    if not checks['all_assumptions_passed']:
+        print("\nWARNING: Some assumptions failed. Results may be invalid.")
     
     n_samples = min(5000, len(our_bids))
     results = ghost_bidding_simulation(
@@ -308,15 +393,60 @@ def demo_iroas_vs_roas(rtb_data):
     spend = rtb_data['spend']
     treatment = rtb_data['treatment']
     
+    # Check assumptions
+    checks = {
+        'rct_balance_passed': True,
+        'sample_size_passed': True,
+        'valid_spend_passed': True,
+        'valid_revenue_passed': True,
+        'all_assumptions_passed': True,
+        'errors': []
+    }
+    
+    n_test = np.sum(treatment == 1)
+    n_control = np.sum(treatment == 0)
+    
+    if n_test < 10 or n_control < 10:
+        checks['sample_size_passed'] = False
+        checks['errors'].append(f"Test: {n_test}, Control: {n_control} (need >= 10 each)")
+    
+    treatment_ratio = n_test / (n_test + n_control) if (n_test + n_control) > 0 else 0.0
+    if treatment_ratio < 0.1 or treatment_ratio > 0.9:
+        checks['rct_balance_passed'] = False
+        checks['errors'].append(f"Treatment ratio {treatment_ratio:.2f} indicates imbalance")
+    
+    test_spend = np.sum(spend[treatment == 1])
+    if test_spend <= 0:
+        checks['valid_spend_passed'] = False
+        checks['errors'].append("Test group spend is zero or negative")
+    
     test_revenue = np.sum(revenue[treatment == 1])
     control_revenue = np.sum(revenue[treatment == 0])
-    test_spend = np.sum(spend[treatment == 1])
+    
+    checks['all_assumptions_passed'] = (
+        checks['rct_balance_passed'] and
+        checks['sample_size_passed'] and
+        checks['valid_spend_passed'] and
+        checks['valid_revenue_passed']
+    )
+    
+    print("\nAssumption Checks:")
+    print(f"  RCT Balance: {'PASS' if checks['rct_balance_passed'] else 'FAIL'}")
+    print(f"  Sample Size: {'PASS' if checks['sample_size_passed'] else 'FAIL'}")
+    print(f"  Valid Spend: {'PASS' if checks['valid_spend_passed'] else 'FAIL'}")
+    if checks['errors']:
+        for err in checks['errors']:
+            print(f"    - {err}")
+    print(f"  All Assumptions: {'PASS' if checks['all_assumptions_passed'] else 'FAIL'}")
+    
+    if not checks['all_assumptions_passed']:
+        print("\nWARNING: Some assumptions failed. Results may be invalid.")
     
     incremental_revenue = test_revenue - control_revenue
     iroas = calculate_iroas(incremental_revenue, test_spend)
     roas = (test_revenue / test_spend * 100.0) if test_spend > 0 else 0.0
     
-    print(f"Test Revenue: ${test_revenue:.2f}, Control: ${control_revenue:.2f}")
+    print(f"\nTest Revenue: ${test_revenue:.2f}, Control: ${control_revenue:.2f}")
     print(f"Incremental Revenue: ${incremental_revenue:.2f}")
     print(f"iROAS: {iroas:.2f}%, ROAS: {roas:.2f}%")
     print(f"Gap: {roas - iroas:.2f} percentage points")

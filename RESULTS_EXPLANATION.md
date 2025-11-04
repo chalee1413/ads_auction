@@ -2,6 +2,26 @@
 
 How to interpret results from the incremental advertising measurement demo.
 
+## Assumption Checks
+
+All demos now include assumption checks that validate data requirements and statistical assumptions before computing results. Each demo displays:
+
+- **PASS/FAIL status** for each assumption
+- **Specific errors** if assumptions fail
+- **WARNING messages** when assumptions fail (results may be invalid)
+
+**Why Assumption Checks Matter:**
+- Invalid results can occur when assumptions are violated
+- Assumption checks help identify data quality issues
+- Failed checks indicate results may be unreliable
+
+**Common Assumptions:**
+- **Sample Size**: Minimum sample sizes required (varies by algorithm)
+- **RCT Balance**: Treatment/control groups should be roughly balanced (50/50 split)
+- **Positivity**: Both treated and control groups must exist
+- **Pre-Post Correlation**: CUPED requires high correlation between pre/post periods
+- **Valid Data**: Spend, revenue, and bid data must be non-zero and valid
+
 ## Understanding the Numbers
 
 **Key Context:**
@@ -20,9 +40,21 @@ How to interpret results from the incremental advertising measurement demo.
 
 **Output**:
 ```
+Assumption Checks:
+  Sample Size: PASS
+  Pre-Post Correlation: PASS (r=0.XXX)
+  Balanced Groups: PASS
+  All Assumptions: PASS
+
 Test: 0.0010, Control: 0.0018
 Lift: -44.44%, P-value: 0.2848
 ```
+
+**Assumption Checks**:
+- **Sample Size**: PASS if >= 10 samples per group (test_pre, control_pre, test_post, control_post)
+- **Pre-Post Correlation**: PASS if correlation > 0.3 (indicates CUPED will be effective)
+- **Balanced Groups**: PASS if groups are roughly equal size (ratio > 0.5)
+- **WARNING**: If assumptions fail, CUPED results may be invalid or provide minimal benefit
 
 **Interpretation**:
 - **Test: 0.0010 (0.1%)**: 1 in 1,000 users converted with ads
@@ -36,10 +68,24 @@ Lift: -44.44%, P-value: 0.2848
 
 **Output**:
 ```
+Assumption Checks:
+  Sample Size: PASS
+  RCT Balance: PASS
+  Positivity: PASS
+    - 1 constant features detected
+  All Assumptions: PASS
+
 Average Treatment Effect: -0.0012
 Effect Variance: 0.0001
 Heterogeneity: 11 segments identified
 ```
+
+**Assumption Checks**:
+- **Sample Size**: PASS if >= 100 samples (recommended minimum)
+- **RCT Balance**: PASS if treatment ratio between 0.1 and 0.9 (roughly 50/50)
+- **Positivity**: PASS if both treated and control groups exist
+- **WARNING**: Constant features detected (will be ignored by tree)
+- **WARNING**: If assumptions fail, causal estimates may be biased
 
 **Interpretation**:
 - **ATE: -0.0012**: Average user has 0.12 percentage point lower conversion probability with treatment
@@ -53,11 +99,25 @@ Heterogeneity: 11 segments identified
 
 **Output**:
 ```
+Assumption Checks:
+  Sample Size: PASS
+  RCT Balance: PASS
+  Positivity: PASS
+  Sufficient Per Group: PASS
+  All Assumptions: PASS
+
 T-Learner: Avg Uplift = -0.0005, MSE = 0.0011
 S-Learner: Avg Uplift = -0.0001, MSE = 0.0000
 X-Learner: Avg Uplift = -0.0005, MSE = 0.0004
 DR-Learner: Avg Uplift = -0.0005, MSE = 0.0006
 ```
+
+**Assumption Checks**:
+- **Sample Size**: PASS if >= 100 samples total
+- **RCT Balance**: PASS if treatment ratio between 0.1 and 0.9
+- **Positivity**: PASS if both treated and control groups exist
+- **Sufficient Per Group**: PASS if >= 50 samples in each group (T-Learner needs sufficient data)
+- **WARNING**: If assumptions fail, uplift models may overfit or produce unreliable estimates
 
 **Interpretation**:
 - **Average Uplift (-0.0005, -0.0001)**: Estimated change in conversion probability per user
@@ -93,11 +153,23 @@ Lift: 0.00%, P-value: 0.5049
 
 **Output**:
 ```
+Assumption Checks:
+  RCT Balance: PASS
+  Sample Size: PASS
+  Valid Spend: PASS
+  All Assumptions: PASS
+
 Test Revenue: $50.00, Control: $90.00
 Incremental Revenue: $-40.00
 iROAS: -0.88%, ROAS: 1.10%
 Gap: 1.99 percentage points
 ```
+
+**Assumption Checks**:
+- **RCT Balance**: PASS if treatment ratio between 0.1 and 0.9
+- **Sample Size**: PASS if >= 10 samples in each group
+- **Valid Spend**: PASS if test group spend > 0
+- **WARNING**: If assumptions fail, iROAS/ROAS calculations may be invalid
 
 **Interpretation**:
 - **Test Revenue: $50.00**: Total revenue from test group (with ads)

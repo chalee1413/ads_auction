@@ -177,6 +177,58 @@ class CausalTree(BaseEstimator):
         }
 
 
+def check_tree_causal_assumptions(
+    X: np.ndarray,
+    treatment: np.ndarray,
+    outcome: np.ndarray
+) -> Dict[str, any]:
+    """
+    Check tree-based causal inference assumptions.
+    
+    Returns dictionary with assumption check results.
+    """
+    checks = {
+        'sample_size_passed': True,
+        'rct_assumption_passed': True,
+        'positivity_passed': True,
+        'balanced_treatment_passed': True,
+        'all_assumptions_passed': True,
+        'errors': []
+    }
+    
+    # Check sample size (minimum 100 recommended)
+    if len(X) < 100:
+        checks['sample_size_passed'] = False
+        checks['errors'].append(f"Sample size {len(X)} < 100 (recommended minimum)")
+    
+    # Check treatment balance (should be roughly 50/50 for RCT)
+    treatment_ratio = np.mean(treatment)
+    if treatment_ratio < 0.1 or treatment_ratio > 0.9:
+        checks['balanced_treatment_passed'] = False
+        checks['errors'].append(f"Treatment ratio {treatment_ratio:.2f} indicates imbalance (expected ~0.5 for RCT)")
+    
+    # Check positivity (both treated and control exist)
+    if np.sum(treatment) == 0 or np.sum(1 - treatment) == 0:
+        checks['positivity_passed'] = False
+        checks['errors'].append("Missing treatment or control group")
+    
+    # Check feature quality (no constant features)
+    feature_vars = np.var(X, axis=0)
+    constant_features = np.sum(feature_vars < 1e-10)
+    if constant_features > 0:
+        checks['errors'].append(f"{constant_features} constant features detected")
+    
+    # Overall check
+    checks['all_assumptions_passed'] = (
+        checks['sample_size_passed'] and
+        checks['rct_assumption_passed'] and
+        checks['positivity_passed'] and
+        checks['balanced_treatment_passed']
+    )
+    
+    return checks
+
+
 def robust_causal_inference(
     X: np.ndarray,
     treatment: np.ndarray,
@@ -200,6 +252,9 @@ def robust_causal_inference(
     Returns:
         Dictionary with treatment effect estimates and segment information
     """
+    # Check assumptions first
+    assumption_checks = check_tree_causal_assumptions(X, treatment, outcome)
+    
     causal_tree = CausalTree(max_depth=max_depth)
     results = causal_tree.estimate_heterogeneous_effects(X, treatment, outcome)
     
@@ -230,7 +285,9 @@ def robust_causal_inference(
         'average_treatment_effect': ate,
         'effect_variance': effect_variance,
         'segment_stats': segment_stats,
-        'feature_importances': results['feature_importances']
+        'feature_importances': results['feature_importances'],
+        'assumption_checks': assumption_checks,
+        'assumptions_passed': assumption_checks['all_assumptions_passed']
     }
 
 

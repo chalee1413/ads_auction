@@ -13,7 +13,7 @@ Six methodologies for measuring incremental advertising effectiveness:
 5. **iROAS vs ROAS** - Incremental vs attributed measurement comparison
 6. **Experiment Workflow** - A/B testing framework
 
-Algorithms use formulas from peer-reviewed papers. Tested on production-scale Kaggle datasets (3M+ impressions).
+Algorithms use formulas from peer-reviewed papers. Tested on production-scale Kaggle datasets (3M+ impressions). All demos include assumption checks that validate data requirements and statistical assumptions before computing results.
 
 ## Quick Start
 

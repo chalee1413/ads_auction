@@ -221,6 +221,63 @@ class DRLearner:
         return self.final_model.predict(X)
 
 
+def check_uplift_assumptions(
+    X: np.ndarray,
+    treatment: np.ndarray,
+    outcome: np.ndarray
+) -> Dict[str, any]:
+    """
+    Check uplift modeling assumptions.
+    
+    Returns dictionary with assumption check results.
+    """
+    checks = {
+        'sample_size_passed': True,
+        'rct_balance_passed': True,
+        'positivity_passed': True,
+        'sufficient_per_group_passed': True,
+        'all_assumptions_passed': True,
+        'errors': []
+    }
+    
+    # Check sample size (minimum 100)
+    if len(X) < 100:
+        checks['sample_size_passed'] = False
+        checks['errors'].append(f"Sample size {len(X)} < 100")
+    
+    # Check treatment balance
+    treatment_ratio = np.mean(treatment)
+    n_treated = np.sum(treatment)
+    n_control = np.sum(1 - treatment)
+    
+    if treatment_ratio < 0.1 or treatment_ratio > 0.9:
+        checks['rct_balance_passed'] = False
+        checks['errors'].append(f"Treatment ratio {treatment_ratio:.2f} indicates imbalance")
+    
+    # Check positivity
+    if n_treated == 0 or n_control == 0:
+        checks['positivity_passed'] = False
+        checks['errors'].append("Missing treatment or control group")
+    
+    # Check sufficient samples per group (minimum 50 each)
+    if n_treated < 50:
+        checks['sufficient_per_group_passed'] = False
+        checks['errors'].append(f"Treatment group size {n_treated} < 50 (T-learner needs sufficient data)")
+    if n_control < 50:
+        checks['sufficient_per_group_passed'] = False
+        checks['errors'].append(f"Control group size {n_control} < 50")
+    
+    # Overall check
+    checks['all_assumptions_passed'] = (
+        checks['sample_size_passed'] and
+        checks['rct_balance_passed'] and
+        checks['positivity_passed'] and
+        checks['sufficient_per_group_passed']
+    )
+    
+    return checks
+
+
 def evaluate_uplift_models(
     X_train: np.ndarray,
     treatment_train: np.ndarray,

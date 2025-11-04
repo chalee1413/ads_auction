@@ -58,6 +58,66 @@ def calculate_theta(
     return cov_pre_post / var_pre
 
 
+def check_cuped_assumptions(
+    test_pre: np.ndarray,
+    test_post: np.ndarray,
+    control_pre: np.ndarray,
+    control_post: np.ndarray
+) -> Dict[str, any]:
+    """
+    Check CUPED assumptions and data requirements.
+    
+    Returns dictionary with assumption check results.
+    """
+    checks = {
+        'sample_size_passed': True,
+        'sample_size_errors': [],
+        'pre_post_correlation_passed': True,
+        'pre_post_correlation': 0.0,
+        'balanced_groups_passed': True,
+        'all_assumptions_passed': True
+    }
+    
+    # Check sample sizes (minimum 10 per group)
+    min_samples = 10
+    if len(test_pre) < min_samples:
+        checks['sample_size_passed'] = False
+        checks['sample_size_errors'].append(f"Test pre: {len(test_pre)} < {min_samples}")
+    if len(control_pre) < min_samples:
+        checks['sample_size_passed'] = False
+        checks['sample_size_errors'].append(f"Control pre: {len(control_pre)} < {min_samples}")
+    if len(test_post) < min_samples:
+        checks['sample_size_passed'] = False
+        checks['sample_size_errors'].append(f"Test post: {len(test_post)} < {min_samples}")
+    if len(control_post) < min_samples:
+        checks['sample_size_passed'] = False
+        checks['sample_size_errors'].append(f"Control post: {len(control_post)} < {min_samples}")
+    
+    # Check pre-post correlation (should be > 0.3 for CUPED to be effective)
+    if len(test_pre) == len(test_post) and len(test_pre) > 1:
+        test_corr = np.corrcoef(test_pre, test_post)[0, 1] if np.std(test_pre) > 0 and np.std(test_post) > 0 else 0.0
+        control_corr = np.corrcoef(control_pre, control_post)[0, 1] if np.std(control_pre) > 0 and np.std(control_post) > 0 else 0.0
+        avg_corr = (test_corr + control_corr) / 2.0
+        checks['pre_post_correlation'] = avg_corr
+        
+        if avg_corr < 0.3:
+            checks['pre_post_correlation_passed'] = False
+    
+    # Check balanced groups (similar sizes)
+    size_ratio = min(len(test_pre), len(control_pre)) / max(len(test_pre), len(control_pre)) if max(len(test_pre), len(control_pre)) > 0 else 0.0
+    if size_ratio < 0.5:  # Groups should be roughly balanced
+        checks['balanced_groups_passed'] = False
+    
+    # Overall check
+    checks['all_assumptions_passed'] = (
+        checks['sample_size_passed'] and
+        checks['pre_post_correlation_passed'] and
+        checks['balanced_groups_passed']
+    )
+    
+    return checks
+
+
 def cuped_adjustment(
     test_pre: np.ndarray,
     test_post: np.ndarray,
@@ -68,10 +128,11 @@ def cuped_adjustment(
     Apply CUPED adjustment to test and control groups.
     
     Process:
-    1. Calculate Theta from combined data
-    2. Adjust test and control post-period means
-    3. Calculate adjusted treatment effect
-    4. Compute variance reduction
+    1. Check assumptions
+    2. Calculate Theta from combined data
+    3. Adjust test and control post-period means
+    4. Calculate adjusted treatment effect
+    5. Compute variance reduction
     
     DECISION RATIONALE:
     Why CUPED?
@@ -112,6 +173,9 @@ def cuped_adjustment(
     Returns:
         Dictionary with adjusted metrics and variance reduction stats
     """
+    # Check assumptions first
+    assumption_checks = check_cuped_assumptions(test_pre, test_post, control_pre, control_post)
+    
     # Combine groups for Theta calculation
     # RATIONALE: More stable estimate using all data, standard CUPED practice
     all_pre = np.concatenate([test_pre, control_pre])
@@ -172,7 +236,9 @@ def cuped_adjustment(
         'effective_sample_size_multiplier': effective_sample_size_multiplier,
         'se_unadjusted': se_unadjusted,
         'se_adjusted': se_adjusted,
-        'pre_period_diff': pre_diff
+        'pre_period_diff': pre_diff,
+        'assumption_checks': assumption_checks,
+        'assumptions_passed': assumption_checks['all_assumptions_passed']
     }
 
 

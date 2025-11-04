@@ -85,6 +85,12 @@ CUPED Keys: All required fields present - Correct
 
 **Results File**: "demo/results/results.txt"
 
+**Assumption Validation:**
+- All demos now include assumption checks before computing results
+- Checks validate data requirements and statistical assumptions
+- Warnings displayed when assumptions fail (results may be invalid)
+- Assumption checks help identify data quality issues
+
 **Actual Output (from demo/results/results.txt):**
 ```
 DEMO 1: A/B Test with CUPED
@@ -121,8 +127,10 @@ DEMO 6: Complete Experiment Workflow
 - **Real data**: All numbers from actual analysis
 - **Deterministic**: Results reproducible (same seed)
 - **Statistically valid**: P-values calculated correctly
+- **Assumption checks**: All demos validate assumptions before computing results
 - **Transparent**: Notes simulated bids where applicable
 - **Clear format**: Easy to read and interpret
+- **Warnings**: Assumption failures clearly flagged with warnings
 
 **Interpretation:**
 - Treatment shows negative effect (not statistically significant)

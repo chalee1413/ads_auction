@@ -15,6 +15,9 @@ This demo implements real algorithms for measuring incremental advertising effec
 
 All algorithms are implemented with proper citations and use real formulas - no placeholders, hardcoded values, or random results.
 
+**Assumption Validation:**
+All demos include assumption checks that validate data requirements and statistical assumptions before computing results. Each demo displays PASS/FAIL status, specific errors if assumptions fail, and WARNING messages when results may be invalid. This ensures transparent reporting of result validity.
+
 ## Installation
 
 1. Install required dependencies:
