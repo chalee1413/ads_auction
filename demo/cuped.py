@@ -281,7 +281,8 @@ def statistical_significance(
     # Two-sample t-test on adjusted values
     t_stat, p_value = stats.ttest_ind(test_adjusted, control_adjusted)
     
-    is_significant = p_value < alpha
+    # Convert numpy bool to Python bool
+    is_significant = bool(p_value < alpha)
     
     # Confidence interval
     test_std_adj = np.std(test_adjusted, ddof=1)

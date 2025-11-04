@@ -56,6 +56,7 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+norecursedirs = ["demo", ".venv", "venv", "__pycache__", ".git"]
 addopts = [
     "--cov=demo",
     "--cov-report=term-missing",

@@ -15,7 +15,7 @@ from demo.incrementality import (
     calculate_iroas,
     calculate_lift,
     calculate_roas,
-    test_significance,
+    test_significance as check_significance,
     compare_roas_iroas
 )
 
@@ -180,7 +180,7 @@ class TestSignificance:
     
     def test_basic_test(self, sample_data):
         """Test basic significance test."""
-        result = test_significance(
+        result = check_significance(
             sample_data['test_outcomes'],
             sample_data['control_outcomes']
         )
@@ -205,7 +205,7 @@ class TestSignificance:
         test_values = np.random.normal(10.0, 1.0, 1000)
         control_values = np.random.normal(8.0, 1.0, 1000)
         
-        result = test_significance(test_values, control_values)
+        result = check_significance(test_values, control_values)
         
         # Should be significant with large sample and clear difference
         assert result['is_significant'] == True
@@ -217,7 +217,7 @@ class TestSignificance:
         test_values = np.random.normal(10.0, 1.0, 100)
         control_values = np.random.normal(10.0, 1.0, 100)
         
-        result = test_significance(test_values, control_values, alpha=0.05)
+        result = check_significance(test_values, control_values, alpha=0.05)
         
         # Should not be significant with same distribution
         assert result['is_significant'] == False
@@ -258,6 +258,7 @@ class TestROASvsIROAS:
         # Gap should be positive (ROAS > iROAS)
         assert result['roas_iroas_gap'] > 0
         
-        # Over-attribution should be 50 (1050 - 1000)
-        assert abs(result['over_attribution'] - 50.0) < 1e-6
+        # Over-attribution should be 850 (1050 attributed - 200 incremental)
+        # This represents how much more is attributed than is actually incremental
+        assert abs(result['over_attribution'] - 850.0) < 1e-6
 

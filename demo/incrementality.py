@@ -158,8 +158,8 @@ def test_significance(
     # Two-sample t-test
     t_stat, p_value = stats.ttest_ind(test_values, control_values)
     
-    # Determine if significant
-    is_significant = p_value < alpha
+    # Determine if significant (convert numpy bool to Python bool)
+    is_significant = bool(p_value < alpha)
     
     # Calculate confidence interval (95% CI)
     test_std = np.std(test_values, ddof=1)
