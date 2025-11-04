@@ -31,12 +31,14 @@ Results saved to "demo/results/results.txt".
 
 ## Documentation
 
-- **DATA_EXPLANATION.md** - Dataset structure and characteristics
-- **ALGORITHM_RATIONALE.md** - Algorithm rationale and citations
-- **RESULTS_EXPLANATION.md** - How to interpret results
-- **QUALITY_ASSESSMENT.md** - Code and algorithm verification
-- **TECHNICAL_REPORT.md** - Methodology and findings
-- **DESIGN_DECISIONS.md** - Algorithm selection rationale
+- **docs/DATA_EXPLANATION.md** - Dataset structure and characteristics
+- **docs/ALGORITHM_RATIONALE.md** - Algorithm rationale and citations
+- **docs/RESULTS_EXPLANATION.md** - How to interpret results
+- **docs/QUALITY_ASSESSMENT.md** - Code and algorithm verification
+- **docs/TECHNICAL_REPORT.md** - Methodology and findings
+- **docs/DESIGN_DECISIONS.md** - Algorithm selection rationale
+- **docs/CITATIONS.md** - Complete bibliography
+- **docs/SETUP.md** - Setup instructions
 
 ## Key Finding
 
@@ -50,7 +52,8 @@ demo/                    # Algorithm implementations
   results/               # Output files
   *.py                   # Algorithm modules
 data/kaggle/             # Dataset storage
-*.md                     # Documentation
+docs/                     # Documentation
+tests/                    # Unit and integration tests
 ```
 
 ## Research Foundation
@@ -61,4 +64,4 @@ Algorithms implement formulas from:
 - **Kunzel et al. (2019)** - Meta-learners for uplift
 - **Kennedy (2020)** - Doubly robust methods
 
-See "demo/CITATIONS.md" for complete bibliography.
+See "docs/CITATIONS.md" for complete bibliography.

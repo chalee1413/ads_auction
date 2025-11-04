@@ -227,7 +227,7 @@ DID = (Y_post_treat - Y_pre_treat) - (Y_post_control - Y_pre_control)
 
 ## Citations
 
-See "CITATIONS.md" for complete bibliography of all cited papers, methodologies, and references from conversation.md.
+See "../docs/CITATIONS.md" for complete bibliography of all cited papers, methodologies, and references from conversation.md.
 
 ## Key Features
 
@@ -265,8 +265,8 @@ Treatment Effect Variance: 8.5678
 ## References
 
 All citations and references are documented in:
-- "CITATIONS.md": Complete bibliography
-- "conversation.md": Original conversation with all references
+- "../docs/CITATIONS.md": Complete bibliography
+- "../docs/SETUP.md": Setup instructions
 
 ## Notes
 

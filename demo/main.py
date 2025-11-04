@@ -9,9 +9,18 @@ Runs demos using real Kaggle datasets:
 import numpy as np
 import pandas as pd
 import sys
+import logging
 from pathlib import Path
+from typing import Dict, Optional, Any
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 try:
     from demo.incrementality import calculate_iroas, calculate_lift, test_significance
@@ -29,28 +38,39 @@ except ImportError:
     from kaggle_integration import KaggleDatasetIntegration
 
 
-def load_datasets():
-    """Load Real-time Auction and Video Ads datasets from Kaggle."""
+def load_datasets() -> Dict[str, pd.DataFrame]:
+    """Load Real-time Auction and Video Ads datasets from Kaggle.
+    
+    Returns:
+        Dictionary with 'auction' and/or 'video_ads' DataFrames
+    """
     kaggle = KaggleDatasetIntegration('data/kaggle')
-    datasets = {}
+    datasets: Dict[str, pd.DataFrame] = {}
     
     # Load Real-time Auction dataset (has revenue data)
     filepath = kaggle.dataset_path / 'Dataset.csv'
     if filepath.exists():
         datasets['auction'] = pd.read_csv(filepath, nrows=10000)
-        print(f"Loaded Real-time Auction: {len(datasets['auction'])} rows")
+        logger.info(f"Loaded Real-time Auction: {len(datasets['auction'])} rows")
     
     # Load Video Ads dataset
     filepath = kaggle.dataset_path / 'ad_df.csv'
     if filepath.exists():
         datasets['video_ads'] = pd.read_csv(filepath, nrows=10000)
-        print(f"Loaded Video Ads: {len(datasets['video_ads'])} rows")
+        logger.info(f"Loaded Video Ads: {len(datasets['video_ads'])} rows")
     
     return datasets
 
 
-def prepare_data(df):
-    """Prepare dataset for incrementality measurement."""
+def prepare_data(df: pd.DataFrame) -> Dict[str, Any]:
+    """Prepare dataset for incrementality measurement.
+    
+    Args:
+        df: Input DataFrame with either video ads or auction data
+        
+    Returns:
+        Dictionary with 'features', 'treatment', 'outcome', 'spend', 'revenue', 'df'
+    """
     if df is None or len(df) == 0:
         raise ValueError("DataFrame is None or empty. Download datasets first.")
     
@@ -110,14 +130,18 @@ def prepare_data(df):
     }
 
 
-def demo_cuped(rtb_data):
-    """DEMO 1: A/B Test with CUPED"""
+def demo_cuped(rtb_data: Optional[Dict[str, Any]]) -> None:
+    """DEMO 1: A/B Test with CUPED
+    
+    Args:
+        rtb_data: Dictionary with prepared data or None
+    """
     if rtb_data is None:
         return
     
-    print("\n" + "=" * 60)
-    print("DEMO 1: A/B Test with CUPED")
-    print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("DEMO 1: A/B Test with CUPED")
+    logger.info("=" * 60)
     
     df = rtb_data['df']
     treatment = rtb_data['treatment']
@@ -154,23 +178,23 @@ def demo_cuped(rtb_data):
                 checks = results['assumption_checks']
                 
                 # Display assumption checks
-                print("\nAssumption Checks:")
-                print(f"  Sample Size: {'PASS' if checks['sample_size_passed'] else 'FAIL'}")
+                logger.info("\nAssumption Checks:")
+                logger.info(f"  Sample Size: {'PASS' if checks['sample_size_passed'] else 'FAIL'}")
                 if not checks['sample_size_passed']:
                     for err in checks['sample_size_errors']:
-                        print(f"    - {err}")
-                print(f"  Pre-Post Correlation: {'PASS' if checks['pre_post_correlation_passed'] else 'FAIL'} (r={checks['pre_post_correlation']:.3f})")
-                print(f"  Balanced Groups: {'PASS' if checks['balanced_groups_passed'] else 'FAIL'}")
-                print(f"  All Assumptions: {'PASS' if results['assumptions_passed'] else 'FAIL'}")
+                        logger.warning(f"    - {err}")
+                logger.info(f"  Pre-Post Correlation: {'PASS' if checks['pre_post_correlation_passed'] else 'FAIL'} (r={checks['pre_post_correlation']:.3f})")
+                logger.info(f"  Balanced Groups: {'PASS' if checks['balanced_groups_passed'] else 'FAIL'}")
+                logger.info(f"  All Assumptions: {'PASS' if results['assumptions_passed'] else 'FAIL'}")
                 
                 if not results['assumptions_passed']:
-                    print("\nWARNING: Some assumptions failed. Results may be invalid.")
+                    logger.warning("\nWARNING: Some assumptions failed. Results may be invalid.")
                 
                 sig = statistical_significance(test_pre, test_post, control_pre, control_post)
-                print(f"\nUnadjusted Effect: {results['unadjusted_effect']:.4f}")
-                print(f"CUPED Effect: {results['adjusted_effect']:.4f}")
-                print(f"Variance Reduction: {results['variance_reduction']*100:.1f}%")
-                print(f"P-value: {sig['p_value']:.4f}, Significant: {sig['is_significant']}")
+                logger.info(f"\nUnadjusted Effect: {results['unadjusted_effect']:.4f}")
+                logger.info(f"CUPED Effect: {results['adjusted_effect']:.4f}")
+                logger.info(f"Variance Reduction: {results['variance_reduction']*100:.1f}%")
+                logger.info(f"P-value: {sig['p_value']:.4f}, Significant: {sig['is_significant']}")
                 return
     
     # Simple comparison
@@ -180,86 +204,94 @@ def demo_cuped(rtb_data):
     if len(test_outcomes) > 10:
         sig = test_significance(test_outcomes, control_outcomes)
         lift = calculate_lift(np.mean(test_outcomes), np.mean(control_outcomes))
-        print(f"Test: {np.mean(test_outcomes):.4f}, Control: {np.mean(control_outcomes):.4f}")
-        print(f"Lift: {lift:.2f}%, P-value: {sig['p_value']:.4f}")
+        logger.info(f"Test: {np.mean(test_outcomes):.4f}, Control: {np.mean(control_outcomes):.4f}")
+        logger.info(f"Lift: {lift:.2f}%, P-value: {sig['p_value']:.4f}")
 
 
-def demo_tree_causal(rtb_data):
-    """DEMO 2: Tree-based Causal Inference"""
+def demo_tree_causal(rtb_data: Optional[Dict[str, Any]]) -> None:
+    """DEMO 2: Tree-based Causal Inference
+    
+    Args:
+        rtb_data: Dictionary with prepared data or None
+    """
     if rtb_data is None:
         return
     
-    print("\n" + "=" * 60)
-    print("DEMO 2: Tree-based Causal Inference")
-    print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("DEMO 2: Tree-based Causal Inference")
+    logger.info("=" * 60)
     
     X = rtb_data['features']
     treatment = rtb_data['treatment']
     outcome = rtb_data['outcome']
     
     if len(X) < 100:
-        print("Insufficient data (need >= 100 samples)")
+        logger.warning("Insufficient data (need >= 100 samples)")
         return
     
     results = robust_causal_inference(X, treatment, outcome)
     checks = results['assumption_checks']
     
     # Display assumption checks
-    print("\nAssumption Checks:")
-    print(f"  Sample Size: {'PASS' if checks['sample_size_passed'] else 'FAIL'}")
-    print(f"  RCT Balance: {'PASS' if checks['balanced_treatment_passed'] else 'FAIL'}")
-    print(f"  Positivity: {'PASS' if checks['positivity_passed'] else 'FAIL'}")
+    logger.info("\nAssumption Checks:")
+    logger.info(f"  Sample Size: {'PASS' if checks['sample_size_passed'] else 'FAIL'}")
+    logger.info(f"  RCT Balance: {'PASS' if checks['balanced_treatment_passed'] else 'FAIL'}")
+    logger.info(f"  Positivity: {'PASS' if checks['positivity_passed'] else 'FAIL'}")
     if checks['errors']:
         for err in checks['errors']:
-            print(f"    - {err}")
-    print(f"  All Assumptions: {'PASS' if results['assumptions_passed'] else 'FAIL'}")
+            logger.warning(f"    - {err}")
+    logger.info(f"  All Assumptions: {'PASS' if results['assumptions_passed'] else 'FAIL'}")
     
     if not results['assumptions_passed']:
-        print("\nWARNING: Some assumptions failed. Results may be invalid.")
+        logger.warning("\nWARNING: Some assumptions failed. Results may be invalid.")
     
-    print(f"\nAverage Treatment Effect: {results['average_treatment_effect']:.4f}")
-    print(f"Effect Variance: {results['effect_variance']:.4f}")
-    print(f"Heterogeneity: {len(results['segment_stats'])} segments identified")
+    logger.info(f"\nAverage Treatment Effect: {results['average_treatment_effect']:.4f}")
+    logger.info(f"Effect Variance: {results['effect_variance']:.4f}")
+    logger.info(f"Heterogeneity: {len(results['segment_stats'])} segments identified")
 
 
-def demo_uplift(rtb_data):
-    """DEMO 3: Uplift Modeling"""
+def demo_uplift(rtb_data: Optional[Dict[str, Any]]) -> None:
+    """DEMO 3: Uplift Modeling
+    
+    Args:
+        rtb_data: Dictionary with prepared data or None
+    """
     if rtb_data is None:
         return
     
-    print("\n" + "=" * 60)
-    print("DEMO 3: Uplift Modeling")
-    print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("DEMO 3: Uplift Modeling")
+    logger.info("=" * 60)
     
     X = rtb_data['features']
     treatment = rtb_data['treatment']
     outcome = rtb_data['outcome']
     
     if len(X) < 100:
-        print("Insufficient data (need >= 100 samples)")
+        logger.warning("Insufficient data (need >= 100 samples)")
         return
     
     # Check assumptions
     from demo.uplift_models import check_uplift_assumptions
     assumption_checks = check_uplift_assumptions(X, treatment, outcome)
     
-    print("\nAssumption Checks:")
-    print(f"  Sample Size: {'PASS' if assumption_checks['sample_size_passed'] else 'FAIL'}")
-    print(f"  RCT Balance: {'PASS' if assumption_checks['rct_balance_passed'] else 'FAIL'}")
-    print(f"  Positivity: {'PASS' if assumption_checks['positivity_passed'] else 'FAIL'}")
-    print(f"  Sufficient Per Group: {'PASS' if assumption_checks['sufficient_per_group_passed'] else 'FAIL'}")
+    logger.info("\nAssumption Checks:")
+    logger.info(f"  Sample Size: {'PASS' if assumption_checks['sample_size_passed'] else 'FAIL'}")
+    logger.info(f"  RCT Balance: {'PASS' if assumption_checks['rct_balance_passed'] else 'FAIL'}")
+    logger.info(f"  Positivity: {'PASS' if assumption_checks['positivity_passed'] else 'FAIL'}")
+    logger.info(f"  Sufficient Per Group: {'PASS' if assumption_checks['sufficient_per_group_passed'] else 'FAIL'}")
     if assumption_checks['errors']:
         for err in assumption_checks['errors']:
-            print(f"    - {err}")
-    print(f"  All Assumptions: {'PASS' if assumption_checks['all_assumptions_passed'] else 'FAIL'}")
+            logger.warning(f"    - {err}")
+    logger.info(f"  All Assumptions: {'PASS' if assumption_checks['all_assumptions_passed'] else 'FAIL'}")
     
     if not assumption_checks['all_assumptions_passed']:
-        print("\nWARNING: Some assumptions failed. Results may be invalid.")
+        logger.warning("\nWARNING: Some assumptions failed. Results may be invalid.")
     
     # Simple uplift model comparison
     models = ['T-Learner', 'S-Learner', 'X-Learner', 'DR-Learner']
     
-    print("\nModel Performance:")
+    logger.info("\nModel Performance:")
     test_mean = outcome[treatment == 1].mean()
     control_mean = outcome[treatment == 0].mean()
     true_uplift = test_mean - control_mean
@@ -279,13 +311,17 @@ def demo_uplift(rtb_data):
             predictions = model.predict_tau(X)
             avg_uplift = predictions.mean()
             mse = np.mean((predictions - true_uplift) ** 2)
-            print(f"  {name}: Avg Uplift = {avg_uplift:.4f}, MSE = {mse:.4f}")
+            logger.info(f"  {name}: Avg Uplift = {avg_uplift:.4f}, MSE = {mse:.4f}")
         except Exception as e:
-            print(f"  {name}: Failed ({str(e)[:30]})")
+            logger.error(f"  {name}: Failed ({str(e)[:30]})")
 
 
-def demo_ghost_bidding(rtb_data):
-    """DEMO 4: Ghost Bidding Simulation"""
+def demo_ghost_bidding(rtb_data: Optional[Dict[str, Any]]) -> None:
+    """DEMO 4: Ghost Bidding Simulation
+    
+    Args:
+        rtb_data: Dictionary with prepared data or None
+    """
     if rtb_data is None:
         return
     
@@ -352,21 +388,21 @@ def demo_ghost_bidding(rtb_data):
         checks['valid_bids_passed']
     )
     
-    print("\n" + "=" * 60)
-    print("DEMO 4: Ghost Bidding Simulation")
-    print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("DEMO 4: Ghost Bidding Simulation")
+    logger.info("=" * 60)
     
-    print("\nAssumption Checks:")
-    print(f"  Bid Data Available: {'PASS' if checks['bid_data_passed'] else 'FAIL'}")
-    print(f"  Sample Size: {'PASS' if checks['sample_size_passed'] else 'FAIL'}")
-    print(f"  Valid Bids: {'PASS' if checks['valid_bids_passed'] else 'FAIL'}")
+    logger.info("\nAssumption Checks:")
+    logger.info(f"  Bid Data Available: {'PASS' if checks['bid_data_passed'] else 'FAIL'}")
+    logger.info(f"  Sample Size: {'PASS' if checks['sample_size_passed'] else 'FAIL'}")
+    logger.info(f"  Valid Bids: {'PASS' if checks['valid_bids_passed'] else 'FAIL'}")
     if checks['errors']:
         for err in checks['errors']:
-            print(f"    - {err}")
-    print(f"  All Assumptions: {'PASS' if checks['all_assumptions_passed'] else 'FAIL'}")
+            logger.warning(f"    - {err}")
+    logger.info(f"  All Assumptions: {'PASS' if checks['all_assumptions_passed'] else 'FAIL'}")
     
     if not checks['all_assumptions_passed']:
-        print("\nWARNING: Some assumptions failed. Results may be invalid.")
+        logger.warning("\nWARNING: Some assumptions failed. Results may be invalid.")
     
     n_samples = min(5000, len(our_bids))
     results = ghost_bidding_simulation(
@@ -374,20 +410,24 @@ def demo_ghost_bidding(rtb_data):
         conversion_rates[:n_samples], control_ratio=0.1
     )
     
-    print(f"\nProcessed {n_samples} impressions with real bid data")
-    print(f"Treatment CVR: {results['treatment_cvr']:.4f}, Control CVR: {results['control_cvr']:.4f}")
-    print(f"Incremental Conversions: {results['incremental_conversions']:.1f}")
-    print(f"Lift: {results['lift']*100:.2f}%, P-value: {results['p_value']:.4f}")
+    logger.info(f"\nProcessed {n_samples} impressions with real bid data")
+    logger.info(f"Treatment CVR: {results['treatment_cvr']:.4f}, Control CVR: {results['control_cvr']:.4f}")
+    logger.info(f"Incremental Conversions: {results['incremental_conversions']:.1f}")
+    logger.info(f"Lift: {results['lift']*100:.2f}%, P-value: {results['p_value']:.4f}")
 
 
-def demo_iroas_vs_roas(rtb_data):
-    """DEMO 5: iROAS vs ROAS Comparison"""
+def demo_iroas_vs_roas(rtb_data: Optional[Dict[str, Any]]) -> None:
+    """DEMO 5: iROAS vs ROAS Comparison
+    
+    Args:
+        rtb_data: Dictionary with prepared data or None
+    """
     if rtb_data is None:
         return
     
-    print("\n" + "=" * 60)
-    print("DEMO 5: iROAS vs ROAS Comparison")
-    print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("DEMO 5: iROAS vs ROAS Comparison")
+    logger.info("=" * 60)
     
     revenue = rtb_data['revenue']
     spend = rtb_data['spend']
@@ -430,37 +470,42 @@ def demo_iroas_vs_roas(rtb_data):
         checks['valid_revenue_passed']
     )
     
-    print("\nAssumption Checks:")
-    print(f"  RCT Balance: {'PASS' if checks['rct_balance_passed'] else 'FAIL'}")
-    print(f"  Sample Size: {'PASS' if checks['sample_size_passed'] else 'FAIL'}")
-    print(f"  Valid Spend: {'PASS' if checks['valid_spend_passed'] else 'FAIL'}")
+    logger.info("\nAssumption Checks:")
+    logger.info(f"  RCT Balance: {'PASS' if checks['rct_balance_passed'] else 'FAIL'}")
+    logger.info(f"  Sample Size: {'PASS' if checks['sample_size_passed'] else 'FAIL'}")
+    logger.info(f"  Valid Spend: {'PASS' if checks['valid_spend_passed'] else 'FAIL'}")
     if checks['errors']:
         for err in checks['errors']:
-            print(f"    - {err}")
-    print(f"  All Assumptions: {'PASS' if checks['all_assumptions_passed'] else 'FAIL'}")
+            logger.warning(f"    - {err}")
+    logger.info(f"  All Assumptions: {'PASS' if checks['all_assumptions_passed'] else 'FAIL'}")
     
     if not checks['all_assumptions_passed']:
-        print("\nWARNING: Some assumptions failed. Results may be invalid.")
+        logger.warning("\nWARNING: Some assumptions failed. Results may be invalid.")
     
     incremental_revenue = test_revenue - control_revenue
     iroas = calculate_iroas(incremental_revenue, test_spend)
     roas = (test_revenue / test_spend * 100.0) if test_spend > 0 else 0.0
     
-    print(f"\nTest Revenue: ${test_revenue:.2f}, Control: ${control_revenue:.2f}")
-    print(f"Incremental Revenue: ${incremental_revenue:.2f}")
-    print(f"iROAS: {iroas:.2f}%, ROAS: {roas:.2f}%")
-    print(f"Gap: {roas - iroas:.2f} percentage points")
+    logger.info(f"\nTest Revenue: ${test_revenue:.2f}, Control: ${control_revenue:.2f}")
+    logger.info(f"Incremental Revenue: ${incremental_revenue:.2f}")
+    logger.info(f"iROAS: {iroas:.2f}%, ROAS: {roas:.2f}%")
+    logger.info(f"Gap: {roas - iroas:.2f} percentage points")
 
 
-def demo_workflow(rtb_data, video_data):
-    """DEMO 6: Complete Experiment Workflow"""
-    print("\n" + "=" * 60)
-    print("DEMO 6: Complete Experiment Workflow")
-    print("=" * 60)
+def demo_workflow(rtb_data: Optional[Dict[str, Any]], video_data: Optional[Dict[str, Any]]) -> None:
+    """DEMO 6: Complete Experiment Workflow
+    
+    Args:
+        rtb_data: Dictionary with prepared auction data or None
+        video_data: Dictionary with prepared video ads data or None
+    """
+    logger.info("\n" + "=" * 60)
+    logger.info("DEMO 6: Complete Experiment Workflow")
+    logger.info("=" * 60)
     
     data = rtb_data if rtb_data is not None else video_data
     if data is None:
-        print("No data available")
+        logger.warning("No data available")
         return
     
     treatment = data['treatment']
@@ -472,12 +517,12 @@ def demo_workflow(rtb_data, video_data):
     if len(test_outcomes) > 10:
         sig = test_significance(test_outcomes, control_outcomes)
         lift = calculate_lift(np.mean(test_outcomes), np.mean(control_outcomes))
-        print(f"Test: {len(test_outcomes)} samples, mean = {np.mean(test_outcomes):.4f}")
-        print(f"Control: {len(control_outcomes)} samples, mean = {np.mean(control_outcomes):.4f}")
-        print(f"Lift: {lift:.2f}%, P-value: {sig['p_value']:.4f}, Significant: {sig['is_significant']}")
+        logger.info(f"Test: {len(test_outcomes)} samples, mean = {np.mean(test_outcomes):.4f}")
+        logger.info(f"Control: {len(control_outcomes)} samples, mean = {np.mean(control_outcomes):.4f}")
+        logger.info(f"Lift: {lift:.2f}%, P-value: {sig['p_value']:.4f}, Significant: {sig['is_significant']}")
 
 
-def main():
+def main() -> None:
     """Run all demonstrations."""
     results_dir = Path(__file__).parent / 'results'
     results_dir.mkdir(exist_ok=True)
@@ -485,13 +530,13 @@ def main():
     
     # Tee output to file and console
     class Tee:
-        def __init__(self, console, file):
+        def __init__(self, console: Any, file: Any) -> None:
             self.console, self.file = console, file
-        def write(self, obj):
+        def write(self, obj: str) -> None:
             self.console.write(obj)
             self.file.write(obj)
             self.file.flush()
-        def flush(self):
+        def flush(self) -> None:
             self.console.flush()
             self.file.flush()
     
@@ -500,34 +545,34 @@ def main():
         with open(results_file, 'w') as f:
             sys.stdout = Tee(original_stdout, f)
             
-            print("\n" + "=" * 60)
-            print("INCREMENTAL ADVERTISING DEMO")
-            print("=" * 60)
+            logger.info("\n" + "=" * 60)
+            logger.info("INCREMENTAL ADVERTISING DEMO")
+            logger.info("=" * 60)
             
             # Load datasets
             datasets = load_datasets()
             if not datasets:
-                print("\nERROR: No datasets found!")
-                print("Download datasets: python3 demo/run_with_kaggle.py")
+                logger.error("\nERROR: No datasets found!")
+                logger.error("Download datasets: python3 demo/run_with_kaggle.py")
                 return
             
             # Prepare data
-            print("\nPreparing data...")
+            logger.info("\nPreparing data...")
             # Use Real-time Auction dataset (Dataset.csv) - has revenue data
             auction_data = None
             if datasets.get('auction') is not None:
                 try:
                     auction_data = prepare_data(datasets.get('auction'))
-                    print("Using Real-time Auction dataset (Dataset.csv) - has revenue data")
+                    logger.info("Using Real-time Auction dataset (Dataset.csv) - has revenue data")
                 except Exception as e:
-                    print(f"Error preparing auction data: {e}")
+                    logger.error(f"Error preparing auction data: {e}")
             
             video_data = None
             if datasets.get('video_ads') is not None:
                 try:
                     video_data = prepare_data(datasets.get('video_ads'))
                 except Exception as e:
-                    print(f"Error preparing video ads data: {e}")
+                    logger.error(f"Error preparing video ads data: {e}")
             
             # Run demos with auction data
             if auction_data:
@@ -539,15 +584,15 @@ def main():
                 demo_iroas_vs_roas(auction_data)
                 demo_workflow(auction_data, video_data)
             elif video_data:
-                print("\nNo auction data available. Running with video ads data only.")
+                logger.info("\nNo auction data available. Running with video ads data only.")
                 demo_workflow(None, video_data)
             else:
-                print("\nERROR: No usable datasets available!")
-                print("Download datasets with revenue/spend data: python3 demo/run_with_kaggle.py")
+                logger.error("\nERROR: No usable datasets available!")
+                logger.error("Download datasets with revenue/spend data: python3 demo/run_with_kaggle.py")
             
-            print("\n" + "=" * 60)
-            print(f"COMPLETE - Results saved to: demo/results/results.txt")
-            print("=" * 60)
+            logger.info("\n" + "=" * 60)
+            logger.info(f"COMPLETE - Results saved to: demo/results/results.txt")
+            logger.info("=" * 60)
     finally:
         sys.stdout = original_stdout
 
