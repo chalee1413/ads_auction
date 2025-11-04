@@ -23,7 +23,7 @@ def download_datasets():
     print("=" * 80)
     print("DOWNLOADING KAGGLE DATASETS")
     print("=" * 80)
-    
+
     # Set up credentials
     print("\n1. Setting up Kaggle credentials...")
     if not setup_kaggle_credentials():
@@ -35,24 +35,24 @@ def download_datasets():
             return False
     else:
         print("   Kaggle credentials set up successfully!")
-    
+
     # Initialize Kaggle integration
     print("\n2. Initializing Kaggle API...")
     kaggle = KaggleDatasetIntegration()
-    
+
     if kaggle.api is None:
         print("   ERROR: Could not authenticate with Kaggle API")
         return False
-    
+
     # Download datasets
     datasets = [
-        ('saurav9786/real-time-advertisers-auction', 'Real-time Advertisers Auction'),
-        ('karnikakapoor/video-ads-engagement-dataset', 'Video Ads Engagement')
+        ("saurav9786/real-time-advertisers-auction", "Real-time Advertisers Auction"),
+        ("karnikakapoor/video-ads-engagement-dataset", "Video Ads Engagement"),
     ]
-    
+
     print("\n3. Downloading datasets...")
     success_count = 0
-    
+
     for dataset_name, dataset_display in datasets:
         print(f"\n   Downloading: {dataset_display} ({dataset_name})")
         try:
@@ -64,11 +64,11 @@ def download_datasets():
                 print(f"   FAILED: Could not download {dataset_display}")
         except Exception as e:
             print(f"   ERROR downloading {dataset_display}: {e}")
-    
-    print(f"\n" + "=" * 80)
+
+    print("\n" + "=" * 80)
     print(f"Download Summary: {success_count}/{len(datasets)} datasets downloaded successfully")
     print("=" * 80)
-    
+
     return success_count > 0
 
 
@@ -77,7 +77,7 @@ def main():
     print("\n" + "=" * 80)
     print("KAGGLE DATASETS DOWNLOAD AND DEMO RUNNER")
     print("=" * 80)
-    
+
     # Download datasets
     if download_datasets():
         print("\n" + "=" * 80)
@@ -95,7 +95,5 @@ def main():
         print("=" * 80)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-
-
